@@ -118,6 +118,16 @@ void updateManagedWindows()
 		return;
 	}
 
+	// First pass: hide all windows not in current workspace
+	for (int i = 0; i < numOfTotalManaged; i++) {
+		if (totalManaged[i].workspaceNumber != currentWorkspace) {
+			// Use Windows cloak to hide window instantly without animation
+			BOOL cloaked = TRUE;
+			DwmSetWindowAttribute(totalManaged[i].handle, DWMWA_CLOAKED, &cloaked, sizeof(cloaked));
+		}
+	}
+
+	// Second pass: show and manage windows in current workspace
 	for (int i = 0; i < numOfTotalManaged; i++) {
 		if (totalManaged[i].workspaceNumber != currentWorkspace) {
 			continue;
@@ -198,12 +208,6 @@ void gotoWorkspace(int number)
 	}
 
 	tileWindows();
-
-	for (int i = 0; i < numOfCurrentlyManaged; i++) {
-		// Use Windows cloak to hide window instantly without animation
-		BOOL cloaked = TRUE;
-		DwmSetWindowAttribute(managed[i], DWMWA_CLOAKED, &cloaked, sizeof(cloaked));
-	}
 
 	currentWorkspace = number;
 	newWorkspace = true;
