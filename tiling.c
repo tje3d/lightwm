@@ -1,6 +1,9 @@
 #include "tiling.h"
 #include "error.h"
 #include <Windows.h>
+#include <dwmapi.h>
+
+#pragma comment(lib, "dwmapi.lib")
 
 #define MAX_MANAGED 1024
 
@@ -121,7 +124,9 @@ void updateManagedWindows()
 		}
 
 		managed[numOfCurrentlyManaged] = totalManaged[i].handle;
-		ShowWindow(managed[numOfCurrentlyManaged], SW_RESTORE);
+		// Use Windows cloak to show window instantly without animation
+		BOOL cloaked = FALSE;
+		DwmSetWindowAttribute(managed[numOfCurrentlyManaged], DWMWA_CLOAKED, &cloaked, sizeof(cloaked));
 		numOfCurrentlyManaged++;
 	}
 }
@@ -195,7 +200,9 @@ void gotoWorkspace(int number)
 	tileWindows();
 
 	for (int i = 0; i < numOfCurrentlyManaged; i++) {
-		CloseWindow(managed[i]);
+		// Use Windows cloak to hide window instantly without animation
+		BOOL cloaked = TRUE;
+		DwmSetWindowAttribute(managed[i], DWMWA_CLOAKED, &cloaked, sizeof(cloaked));
 	}
 
 	currentWorkspace = number;
@@ -214,7 +221,9 @@ void moveWindowToWorkspace(int workspaceNumber)
 		return;
 	}
 
-	CloseWindow(managedWindow->handle);
+	// Use Windows cloak to hide window instantly without animation
+	BOOL cloaked = TRUE;
+	DwmSetWindowAttribute(managedWindow->handle, DWMWA_CLOAKED, &cloaked, sizeof(cloaked));
 	managedWindow->workspaceNumber = workspaceNumber;
 	tileWindows();
 }
