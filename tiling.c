@@ -3,8 +3,10 @@
 #include <Windows.h>
 #include <objbase.h>
 #include <shobjidl.h>
+#include <winstring.h>
 
 #pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "windowsapp.lib")
 
 // IApplicationView interface for window cloaking
 typedef enum {
@@ -21,9 +23,9 @@ typedef struct IApplicationViewVtbl {
     ULONG (*AddRef)(void* this);
     ULONG (*Release)(void* this);
     HRESULT (*GetIids)(void* this, ULONG* iidCount, IID** iids);
-    HRESULT (*GetRuntimeClassName)(void* this, HSTRING* className);
+    HRESULT (*GetRuntimeClassName)(void* this, void* className);
     HRESULT (*GetTrustLevel)(void* this, int* trustLevel);
-    HRESULT (*SetFocus)(void* this);
+    HRESULT (*SetFocusView)(void* this);
     HRESULT (*SwitchTo)(void* this);
     HRESULT (*TryInvokeBack)(void* this, void* callback);
     HRESULT (*GetThumbnailWindow)(void* this, HWND* hwnd);
@@ -32,9 +34,9 @@ typedef struct IApplicationViewVtbl {
     HRESULT (*SetCloak)(void* this, APPLICATION_VIEW_CLOAK_TYPE cloakType, int unknown);
 } IApplicationViewVtbl;
 
-typedef struct {
+struct IApplicationView {
     IApplicationViewVtbl* lpVtbl;
-} IApplicationView;
+};
 
 // IApplicationViewCollection interface GUID
 static const GUID IID_IApplicationViewCollection = {0x1841C6D7, 0x4F9D, 0x42C0, {0xAF, 0x41, 0x87, 0x47, 0x53, 0x8F, 0x10, 0xE5}};
@@ -44,20 +46,20 @@ typedef struct IApplicationViewCollectionVtbl {
     ULONG (*AddRef)(void* this);
     ULONG (*Release)(void* this);
     HRESULT (*GetIids)(void* this, ULONG* iidCount, IID** iids);
-    HRESULT (*GetRuntimeClassName)(void* this, HSTRING* className);
+    HRESULT (*GetRuntimeClassName)(void* this, void* className);
     HRESULT (*GetTrustLevel)(void* this, int* trustLevel);
     HRESULT (*GetViews)(void* this, void** array);
     HRESULT (*GetViewsByZOrder)(void* this, void** array);
     HRESULT (*GetViewsByAppUserModelId)(void* this, PCWSTR id, void** array);
-    HRESULT (*GetViewForHwnd)(void* this, HWND hwnd, IApplicationView** view);
-    HRESULT (*GetViewForApplication)(void* this, void* application, IApplicationView** view);
-    HRESULT (*GetViewInFocus)(void* this, IApplicationView** view);
-    HRESULT (*TryGetViewInFocus)(void* this, IApplicationView** view);
+    HRESULT (*GetViewForHwnd)(void* this, HWND hwnd, struct IApplicationView** view);
+    HRESULT (*GetViewForApplication)(void* this, void* application, struct IApplicationView** view);
+    HRESULT (*GetViewInFocus)(void* this, struct IApplicationView** view);
+    HRESULT (*TryGetViewInFocus)(void* this, struct IApplicationView** view);
 } IApplicationViewCollectionVtbl;
 
-typedef struct {
+struct IApplicationViewCollection {
     IApplicationViewCollectionVtbl* lpVtbl;
-} IApplicationViewCollection;
+};
 
 // IServiceProvider interface GUID
 static const GUID IID_IServiceProvider = {0x6D5140C1, 0x7436, 0x11CE, {0x80, 0x34, 0x00, 0xAA, 0x00, 0x60, 0x09, 0x34}};
@@ -78,8 +80,8 @@ void CleanupCloaking() {
 // Function to cloak/uncloak window using IApplicationView
 void SetWindowCloak(HWND hwnd, BOOL cloak) {
     IServiceProvider* serviceProvider = NULL;
-    IApplicationViewCollection* viewCollection = NULL;
-    IApplicationView* appView = NULL;
+    struct IApplicationViewCollection* viewCollection = NULL;
+    struct IApplicationView* appView = NULL;
     
     HRESULT hr = CoCreateInstance(&CLSID_ImmersiveShell, NULL, CLSCTX_LOCAL_SERVER, &IID_IServiceProvider, (void**)&serviceProvider);
     if (FAILED(hr) || !serviceProvider) return;
